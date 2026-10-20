@@ -11,7 +11,7 @@ no network permission. Kotlin and Jetpack Compose.
 
 ## Install
 
-Download the signed APK from [Releases](../../releases), open it on the phone and allow the
+Download the signed APK from [Releases](https://github.com/cristifcp/MoonlightPages/releases), open it on the phone and allow the
 installer to install from that app once. Android 8.0 (API 26) or newer.
 
 Each release is built from its tag by this repository's own workflow and signed with the same key
@@ -103,7 +103,7 @@ You need Android Studio (or a JDK 17+ and the Android SDK) and a phone or emulat
 8.0 (API 26) or newer. The project compiles against API 37.
 
 ```bash
-git clone <this repository>
+git clone https://github.com/cristifcp/MoonlightPages.git
 cd MoonlightPages
 
 # Build the app
