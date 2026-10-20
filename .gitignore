@@ -1,0 +1,25 @@
+# Gradle
+.gradle/
+build/
+app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# Local configuration, never shared: it holds this machine's SDK path.
+local.properties
+
+# Android Studio and IntelliJ
+.idea/
+*.iml
+*.hprof
+
+# Signing material
+*.jks
+*.keystore
+keystore.properties
+
+# Operating systems
+.DS_Store
+Thumbs.db
