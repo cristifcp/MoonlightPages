@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased
+## 1.1 — 21 October 2026
 
 **The shelf**
 
