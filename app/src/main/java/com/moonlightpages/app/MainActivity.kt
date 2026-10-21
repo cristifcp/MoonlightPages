@@ -136,15 +136,18 @@ private fun MoonlightPages(
 ) {
     val state by model.state.collectAsState()
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
-    var settings by rememberSaveable { mutableStateOf(false) }
+    var tab by rememberSaveable { mutableIntStateOf(ShelfTab.Library.ordinal) }
+    // A note tapped in the notebook opens its book at the marked page, not where the book was left.
+    var openAt by remember { mutableStateOf<SelectedPassage?>(null) }
     val screens = rememberSaveableStateHolder()
     val selected = state.books.find { it.id == selectedId }
+    val current = ShelfTab.entries[tab.coerceIn(ShelfTab.entries.indices)]
 
     // A book handed to the app from a file manager opens itself once the shelf knows about it.
     LaunchedEffect(state.openBookId) {
         val opening = state.openBookId
         if (opening != null) {
-            settings = false
+            tab = ShelfTab.Library.ordinal
             selectedId = opening
             model.consumeOpened()
         }
@@ -160,24 +163,39 @@ private fun MoonlightPages(
         if (uri != null) model.restoreFrom(uri)
     }
 
-    when {
-        selected != null -> ReaderScreen(selected, model.store) { selectedId = null }
-        settings -> SettingsScreen(model.store, onBack = { settings = false },
-            backingUp = state.backingUp, restoring = state.restoring,
-            darkTheme = darkTheme, onDarkTheme = onDarkTheme,
-            onBackup = { backupSaver.launch(backupFileName()) },
-            onRestore = { backupPicker.launch(SUPPORTED_BACKUP_TYPES) })
-        else -> screens.SaveableStateProvider("library") {
-            LibraryScreen(state, model.store,
-                onImport = { picker.launch(arrayOf(
-                    // Anything the file manager can hand over: these are books, not a file type the
-                    // system knows. A file that is neither an EPUB nor a FictionBook is refused
-                    // plainly once it is open, which is a better gate than a guessed type.
-                    "*/*")) },
-                onSample = { model.importSample() }, onRetry = { model.reload() },
-                onOpen = { selectedId = it.id }, onSettings = { settings = true },
-                onDelete = { model.delete(it) })
+    // A book takes the whole screen. The rest of the app shares one bar along its foot.
+    if (selected != null) {
+        ReaderScreen(selected, model.store, openAt = openAt, onBack = { selectedId = null; openAt = null })
+    } else {
+        Box(Modifier.fillMaxSize().windowInsetsPadding(
+            WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))) {
+            when (current) {
+                ShelfTab.Notebook -> NotebookScreen(state, model.store) { book, passage ->
+                    openAt = passage
+                    selectedId = book.id
+                }
+                ShelfTab.Library -> screens.SaveableStateProvider("library") {
+                    LibraryScreen(state, model.store,
+                        onImport = { picker.launch(arrayOf(
+                            // Anything the file manager can hand over: these are books, not a file type the
+                            // system knows. A file that is neither an EPUB nor a FictionBook is refused
+                            // plainly once it is open, which is a better gate than a guessed type.
+                            "*/*")) },
+                        onSample = { model.importSample() }, onRetry = { model.reload() },
+                        onOpen = { openAt = null; selectedId = it.id },
+                        onDelete = { model.delete(it) })
+                }
+                ShelfTab.Settings -> SettingsScreen(model.store,
+                    onBack = { tab = ShelfTab.Library.ordinal },
+                    backingUp = state.backingUp, restoring = state.restoring,
+                    darkTheme = darkTheme, onDarkTheme = onDarkTheme,
+                    onBackup = { backupSaver.launch(backupFileName()) },
+                    onRestore = { backupPicker.launch(SUPPORTED_BACKUP_TYPES) }, showBack = false)
+            }
+            Box(Modifier.align(Alignment.BottomCenter)) { ShelfBar(current) { tab = it.ordinal } }
         }
+        // The notebook and the settings are rooms off the shelf, so Back returns to it.
+        BackHandler(current != ShelfTab.Library) { tab = ShelfTab.Library.ordinal }
     }
     state.duplicate?.let { pending ->
         DuplicateBookDialog(pending, model::openExistingCopy, model::addSecondCopy, model::cancelIncoming)
@@ -193,12 +211,18 @@ private fun MoonlightPages(
     }
 }
 
+/**
+ * The page and its controls. [openAt] is a marked passage the reader asked for from the notebook, so
+ * the book opens on that page rather than where it was left; the reading place follows from there.
+ */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-internal fun ReaderScreen(book: Book, store: EpubStore, onBack: () -> Unit) {
-    var chapter by rememberSaveable(book.id) { mutableIntStateOf(store.chapter(book)) }
-    var position by remember(book.id) { mutableFloatStateOf(store.position(book)) }
-    var textAnchor by remember(book.id) { mutableStateOf(store.anchor(book)) }
+internal fun ReaderScreen(
+    book: Book, store: EpubStore, openAt: SelectedPassage? = null, onBack: () -> Unit,
+) {
+    var chapter by rememberSaveable(book.id) { mutableIntStateOf(openAt?.chapter ?: store.chapter(book)) }
+    var position by remember(book.id) { mutableFloatStateOf(openAt?.fraction ?: store.position(book)) }
+    var textAnchor by remember(book.id) { mutableStateOf(openAt?.start ?: store.anchor(book)) }
     var pageLocation by remember(book.id) { mutableStateOf(ReadingLocation(position, textAnchor)) }
     var pendingBookmarkUpgrade by remember(book.id) { mutableStateOf<String?>(null) }
     var renderError by remember { mutableStateOf<String?>(null) }

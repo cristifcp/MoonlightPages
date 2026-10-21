@@ -437,6 +437,19 @@ class EpubStore(private val context: Context) {
     }
 
     /**
+     * How the shelf is laid out and kept in order. A row a book is the quiet default; the wall of
+     * covers is there for a reader who would rather recognise a book than read down a list.
+     */
+    fun shelfList() = preferences.getBoolean("shelfList", true)
+    fun saveShelfList(list: Boolean) {
+        preferences.edit().putBoolean("shelfList", list).apply()
+    }
+    fun shelfOrder() = preferences.getInt("shelfOrder", 0).coerceIn(0, ShelfOrder.entries.lastIndex)
+    fun saveShelfOrder(order: Int) {
+        preferences.edit().putInt("shelfOrder", order.coerceIn(0, ShelfOrder.entries.lastIndex)).apply()
+    }
+
+    /**
      * Dark or light. Until the reader chooses, the phone's own day/night setting decides, so the app
      * arrives looking the way the rest of the phone does.
      */
