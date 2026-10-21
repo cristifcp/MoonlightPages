@@ -42,13 +42,15 @@ class LibraryScreenTest {
         compose.setContent { MoonlightTheme(darkTheme = false) {
             LibraryScreen(LibraryState(listOf(book, other), loading = false, available = true), store, {}, {}, {}, {})
         } }
-        compose.onNodeWithText("Search your library").performScrollTo().performTextInput("  quiet moonlight  ")
-        compose.onNodeWithText("1 match in your library").assertExists()
+        // The search field is asked for rather than always on the shelf, so the shelf stays quiet.
+        compose.onNodeWithContentDescription("Search your library").performClick()
+        compose.onNodeWithText("Search your library").performTextInput("  quiet moonlight  ")
+        compose.onNodeWithText("1 of 2").assertExists()
         compose.onNodeWithContentDescription("Clear search").performClick()
         compose.onNodeWithText("Search your library").performTextInput("unknown title")
         compose.onNodeWithText("No books match your search.").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Show all books").performClick()
-        compose.onNodeWithText("2 books on your shelf", substring = true).assertExists()
+        compose.onNodeWithText("2 books").assertExists()
     }
 
     @Test fun holdingACoverOffersToDeleteTheBookAndKeepsItUntilConfirmed() {
@@ -57,7 +59,13 @@ class LibraryScreenTest {
             LibraryScreen(LibraryState(listOf(book), loading = false, available = true), store,
                 {}, {}, {}, {}, onDelete = { deleted = it })
         } }
-        compose.onNodeWithText("hold a cover to remove a book", substring = true).assertExists()
+        // The row's own menu says the same thing without needing a long press.
+        compose.onNodeWithContentDescription("More for ${book.title}").performClick()
+        compose.onNodeWithText("Remove from shelf").assertExists()
+        compose.onNodeWithText("Remove from shelf").performClick()
+        compose.onNodeWithText("Delete “${book.title}”?", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Keep it").performClick()
+        compose.runOnIdle { assertNull(deleted) }
 
         compose.onNodeWithContentDescription("${book.title}, by ${book.author}")
             .performScrollTo().performTouchInput { longClick() }
@@ -89,6 +97,7 @@ class LibraryScreenTest {
                 LibraryScreen(LibraryState(listOf(book), loading = false, available = true), store, {}, {}, {}, { opened = true })
             }
         } }
+        compose.onNodeWithContentDescription("Search your library").performClick()
         compose.onNodeWithText("Search your library").performScrollTo().performTextInput("quiet")
         compose.onNodeWithContentDescription("${book.title}, by ${book.author}").performScrollTo().performClick()
         compose.runOnIdle { opened = false }
@@ -119,22 +128,24 @@ class LibraryScreenTest {
         compose.onNodeWithText("Or start with Moby Dick").assertIsNotEnabled()
     }
 
-    @Test fun theImportButtonIsNotTappableWhileABackupIsBeingWritten() {
+    @Test fun theImportActionIsNotTappableWhileABackupIsBeingWritten() {
         compose.setContent { MoonlightTheme(darkTheme = false) {
             LibraryScreen(LibraryState(listOf(book), loading = false, backingUp = true, available = true), store,
                 {}, {}, {}, {})
         } }
-        compose.onNodeWithText("+  Import a book").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Import a book").assertIsNotEnabled()
     }
 
-    @Test fun theGearOpensSettings() {
-        var opened = false
+    @Test fun theBarChoosesAnotherRoom() {
+        var chosen: ShelfTab? = null
         compose.setContent { MoonlightTheme(darkTheme = false) {
-            LibraryScreen(LibraryState(listOf(book), loading = false, available = true), store,
-                {}, {}, {}, {}, { opened = true })
+            ShelfBar(ShelfTab.Library) { chosen = it }
         } }
         compose.onNodeWithContentDescription("Settings").performClick()
-        assertTrue(opened)
+        assertEquals(ShelfTab.Settings, chosen)
+        compose.onNodeWithContentDescription("Notebook").performClick()
+        assertEquals(ShelfTab.Notebook, chosen)
+        compose.onNodeWithContentDescription("Library").assertIsSelected()
     }
 
     @Test fun coversShowProgressAndFinishedBooksAreFlagged() {
@@ -202,7 +213,7 @@ class LibraryScreenTest {
         compose.setContent { MoonlightTheme(darkTheme = false) {
             LibraryScreen(LibraryState(shelf, loading = false, available = true), store, {}, {}, {}, {})
         } }
-        compose.onNodeWithText("Your library").assertIsDisplayed()
+        compose.onNodeWithText("Library").assertIsDisplayed()
         val output = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null),
             "moonlight-library-preview.png")
         output.outputStream().use { compose.onRoot().captureToImage().asAndroidBitmap()

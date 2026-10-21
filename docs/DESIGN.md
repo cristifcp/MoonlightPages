@@ -21,7 +21,20 @@ setting decides. The reading page is separate again: it keeps its own paper (whi
 night), and the reader's controls take their colour from the paper they sit on, so a night
 page is never framed in daylight chrome.
 
+The shelf: the app is three rooms along the foot of the screen — the notebook, the library and
+settings — and a book opened fills all of it. The library is a heading, one shell holding its three
+actions (import, search, and whether the shelf is a list or a wall of covers), a single line naming
+the book that was put down last, and a sheet that runs past the bottom of the screen with the bar
+standing over it. The books are rows by default — cover, title, author, when it was last picked up —
+because a shelf is read down rather than scanned like a shop window; the covers are one tap away for
+a reader who knows a book by its face before its name. The order (last read, title, author) is the
+reader's to choose and is remembered. Each row keeps its three ways in: tap to open, the menu for
+**Remove from shelf**, and a long press that says the same thing without needing to be discovered.
+The notebook gathers every note in every book, newest first, and a note opens the page it was
+written on rather than wherever the book was last left.
+
 The app ID and Kotlin namespace are `com.moonlightpages.app`, and the project folder is
+
 `MoonlightPages` — all of it renamed from the app's first name. Renaming the app ID is what
 makes Android treat this as a new app: it installs beside the old one rather than over it, so
 the reader's library had to be carried across by hand. A backup (**Settings → Back up your

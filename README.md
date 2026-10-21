@@ -54,12 +54,15 @@ storage and can be carried to another phone in a single zip.
 
 **The shelf**
 
-- Covers, title and author search, a hairline progress bar per book, a **Continue reading** card,
-  and a **Finished** mark on the last page.
+- A shelf kept in rows — cover, title, author and when the book was last put down — with the covers
+  one tap away, and an order to choose: most recently read, title, or author.
+- Title and author search, a single **Continue reading** line at the top, and a **Finished** mark on
+  the last page.
+- Three rooms along the foot of the screen: **Notebook**, **Library** and **Settings**.
 - Books arrive from the file picker, from **Open with**, or by sharing a file to the app. Imported
   copies live in the app's own storage; the file you imported is never touched.
-- Remove a book by holding its cover: it takes the imported copy, its reading place, bookmarks,
-  highlights and notes with it, and nothing belonging to any other book.
+- Remove a book from its row's menu, or by holding the row: it takes the imported copy, its reading
+  place, bookmarks, highlights and notes with it, and nothing belonging to any other book.
 - A whole novel comes with the app, so there is something to read before importing anything:
   *Moby Dick; Or, The Whale*, as a real Project Gutenberg EPUB.
 

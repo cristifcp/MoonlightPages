@@ -55,6 +55,8 @@ internal fun SettingsScreen(
     onDarkTheme: (Boolean) -> Unit = {},
     onBackup: () -> Unit = {},
     onRestore: () -> Unit = {},
+    /** False when Settings is a room of its own in the bar, where a back arrow would be a second way out. */
+    showBack: Boolean = true,
 ) {
     var swipeToTurn by remember { mutableStateOf(store.swipeToTurn()) }
     var tapToTurn by remember { mutableStateOf(store.tapToTurn()) }
@@ -74,7 +76,7 @@ internal fun SettingsScreen(
     Scaffold(topBar = {
         TopAppBar(title = { Text("Settings", style = MaterialTheme.typography.titleLarge) },
             navigationIcon = {
-                IconButton(onClick = onBack) {
+                if (showBack) IconButton(onClick = onBack) {
                     Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "Back to library")
                 }
             })
@@ -143,7 +145,7 @@ internal fun SettingsScreen(
             Text("Your books, progress, bookmarks, and highlights stay on this device and are never uploaded.",
                 style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 14.dp))
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(104.dp))
         }
     }
     if (confirmingRestore) AlertDialog(onDismissRequest = { confirmingRestore = false },

@@ -1,5 +1,20 @@
 # Release notes
 
+## Unreleased
+
+**The shelf**
+
+- The library is rows now, on one sheet that runs past the foot of the screen: cover, title, author,
+  and when the book was last picked up. The wall of covers is still there, one tap away.
+- The order is yours to choose — read last, title, or author — and is remembered, along with whether
+  the shelf is a list or a wall.
+- A bar along the foot of the screen holds the three rooms of the app: **Notebook**, **Library** and
+  **Settings**.
+- The notebook gathers every note from every book, newest first; tapping one opens the page it was
+  written on rather than wherever the book was left.
+- Import, search and the layout sit together in one shell at the top right of the shelf, and the
+  search field appears only when it is asked for.
+
 ## 1.0 — 21 October 2026
 
 The first release.
