@@ -1,5 +1,18 @@
 # Release notes
 
+## 1.2 — 21 October 2026
+
+**The shelf**
+
+- Every row says how far in you are ("Read 3 h ago · 20 %") and a finished book says so.
+- The shelf can be narrowed to what you are reading, what has not been opened, and what you have
+  finished. The filter is remembered, and the count says how much of the shelf is showing.
+
+**The notebook**
+
+- A note can be rewritten or dropped from the notebook itself, without opening the book.
+- The whole notebook can be saved as a Markdown file, grouped by book, wherever you choose to keep it.
+
 ## 1.1.1 — 21 October 2026
 
 - The shelf and the notebook paint the app's own background now, so a dark theme no longer shows a

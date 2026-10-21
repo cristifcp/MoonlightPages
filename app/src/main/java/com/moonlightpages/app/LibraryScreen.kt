@@ -8,8 +8,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,6 +34,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
@@ -70,6 +73,32 @@ internal fun shelfBooks(books: List<Book>, order: ShelfOrder, lastRead: (Book) -
         compareBy<Book> { it.author.lowercase() }.thenBy { it.title.lowercase() })
 }
 
+/** What the shelf is narrowed to. [All] is the shelf itself, with nothing taken out. */
+internal enum class ShelfFilter(val label: String) {
+    All("All"), Reading("Reading"), Unread("Unread"), Finished("Finished"),
+}
+
+/**
+ * The shelf as one filter leaves it. A book is being read once it has been opened and is not
+ * finished, and unread until it has been opened at all.
+ */
+internal fun filterBooks(
+    books: List<Book>, filter: ShelfFilter,
+    progress: (Book) -> Float, finished: (Book) -> Boolean,
+): List<Book> = when (filter) {
+    ShelfFilter.All -> books
+    ShelfFilter.Reading -> books.filter { !finished(it) && progress(it) > 0f }
+    ShelfFilter.Unread -> books.filter { !finished(it) && progress(it) <= 0f }
+    ShelfFilter.Finished -> books.filter { finished(it) }
+}
+
+/** What a row says about where the reader is: when it was last opened, and how far in. */
+internal fun shelfMeta(now: Long, at: Long, percent: Int, finished: Boolean): String = when {
+    finished -> "Finished"
+    percent > 0 -> "${lastReadLabel(now, at)} · $percent %"
+    else -> lastReadLabel(now, at)
+}
+
 /**
  * How long ago a book was opened, in the plain words a shelf uses. A book with no saved time at all
  * is one that has never been read, which is said plainly rather than as "never ago".
@@ -106,6 +135,7 @@ internal fun LibraryScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var searching by rememberSaveable { mutableStateOf(false) }
     var orderIndex by rememberSaveable { mutableIntStateOf(store.shelfOrder()) }
+    var filterIndex by rememberSaveable { mutableIntStateOf(store.shelfFilter()) }
     var shelfList by rememberSaveable { mutableStateOf(store.shelfList()) }
     var pendingDelete by rememberSaveable { mutableStateOf<String?>(null) }
     val order = ShelfOrder.entries[orderIndex.coerceIn(ShelfOrder.entries.indices)]
@@ -115,7 +145,9 @@ internal fun LibraryScreen(
     // The shelf is stamped once per visit; a row's "read just now" does not need to tick over.
     val now = remember { System.currentTimeMillis() }
     val ordered = remember(state.books, orderIndex) { shelfBooks(state.books, order, store::lastRead) }
-    val filtered = remember(ordered, query) { matchingBooks(ordered, query) }
+    val filter = ShelfFilter.entries[filterIndex.coerceIn(ShelfFilter.entries.indices)]
+    val visible = remember(ordered, filterIndex) { filterBooks(ordered, filter, store::progress, store::finished) }
+    val filtered = remember(visible, query) { matchingBooks(visible, query) }
     val resume = remember(ordered) { store.resumeBook(ordered) }
     val doomed = pendingDelete?.let { id -> state.books.find { it.id == id } }
     val open = { book: Book -> keyboard?.hide(); focus.clearFocus(); onOpen(book) }
@@ -163,9 +195,16 @@ internal fun LibraryScreen(
                 verticalArrangement = Arrangement.spacedBy(if (shelfList) 0.dp else 20.dp),
             ) {
                 item(key = "shelf-heading", span = { GridItemSpan(maxLineSpan) }) {
-                    ShelfHeading(order, state.books.size, filtered.size, query.isNotBlank()) {
+                    ShelfHeading(order, state.books.size, filtered.size,
+                        narrowed = query.isNotBlank() || filter != ShelfFilter.All) {
                         orderIndex = it.ordinal
                         store.saveShelfOrder(it.ordinal)
+                    }
+                }
+                item(key = "shelf-filters", span = { GridItemSpan(maxLineSpan) }) {
+                    ShelfFilters(filter) {
+                        filterIndex = it.ordinal
+                        store.saveShelfFilter(it.ordinal)
                     }
                 }
                 if (state.loading || state.importing) item(key = "loading", span = { GridItemSpan(maxLineSpan) }) {
@@ -269,7 +308,7 @@ private fun ShellDivider() {
  */
 @Composable
 private fun ShelfHeading(
-    order: ShelfOrder, books: Int, shown: Int, searching: Boolean, onOrder: (ShelfOrder) -> Unit,
+    order: ShelfOrder, books: Int, shown: Int, narrowed: Boolean, onOrder: (ShelfOrder) -> Unit,
 ) {
     var choosing by remember { mutableStateOf(false) }
     val colours = MaterialTheme.colorScheme
@@ -295,13 +334,43 @@ private fun ShelfHeading(
         Spacer(Modifier.weight(1f))
         Text(
             when {
-                searching -> "$shown of $books"
+                narrowed -> "$shown of $books"
                 books == 1 -> "1 book"
                 else -> "$books books"
             },
             style = MaterialTheme.typography.labelMedium.copy(letterSpacing = .6.sp),
             color = colours.onSurfaceVariant,
         )
+    }
+}
+
+/**
+ * The shelf narrowed by what the reader is looking for: everything, what is being read, what has
+ * not been opened, and what is finished. A chip is a quiet pill rather than a button, so the shelf
+ * keeps its calm.
+ */
+@Composable
+private fun ShelfFilters(current: ShelfFilter, onFilter: (ShelfFilter) -> Unit) {
+    val colours = MaterialTheme.colorScheme
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+        .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ShelfFilter.entries.forEach { option ->
+            val active = option == current
+            val shape = RoundedCornerShape(50)
+            Box(Modifier.clip(shape)
+                .background(if (active) colours.primary.copy(alpha = .16f) else Color.Transparent)
+                .border(1.dp, if (active) Color.Transparent else colours.outlineVariant.copy(alpha = .55f), shape)
+                .clickable { onFilter(option) }
+                .semantics {
+                    selected = active
+                    contentDescription = "Show ${option.label} books"
+                }
+                .padding(horizontal = 14.dp, vertical = 7.dp)) {
+                Text(option.label, style = MaterialTheme.typography.labelMedium,
+                    color = if (active) colours.primary else colours.onSurfaceVariant)
+            }
+        }
     }
 }
 
@@ -400,6 +469,7 @@ private fun BookRow(book: Book, store: EpubStore, now: Long, onOpen: (Book) -> U
     val cover = rememberCover(book, store)
     val lastRead = remember(book.id) { store.lastRead(book) }
     val finished = remember(book.id) { store.finished(book) }
+    val percent = remember(book.id) { store.progressPercent(book) }
     var menu by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().padding(end = 8.dp), verticalAlignment = Alignment.Top) {
         // The book itself is one thing to a screen reader; the menu beside it stays its own.
@@ -409,7 +479,7 @@ private fun BookRow(book: Book, store: EpubStore, now: Long, onOpen: (Book) -> U
                 contentDescription = "${book.title}, by ${book.author}" + if (finished) ", finished" else ""
                 // When it was last put down is state, not identity, so it is said in its own place
                 // rather than folded into the book's name.
-                stateDescription = lastReadLabel(now, lastRead)
+                stateDescription = shelfMeta(now, lastRead, percent, finished)
                 customActions = listOf(CustomAccessibilityAction("Remove this book") { onLongPress(book); true })
             }
             .padding(start = 18.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.Top) {
@@ -420,7 +490,7 @@ private fun BookRow(book: Book, store: EpubStore, now: Long, onOpen: (Book) -> U
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(book.author, style = MaterialTheme.typography.bodySmall, color = colours.onSurfaceVariant,
                     maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp))
-                Text(lastReadLabel(now, lastRead), style = MaterialTheme.typography.bodySmall,
+                Text(shelfMeta(now, lastRead, percent, finished), style = MaterialTheme.typography.bodySmall,
                     color = colours.onSurfaceVariant.copy(alpha = .78f), modifier = Modifier.padding(top = 6.dp))
             }
             Spacer(Modifier.width(4.dp))

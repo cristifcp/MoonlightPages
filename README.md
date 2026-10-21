@@ -56,6 +56,8 @@ storage and can be carried to another phone in a single zip.
 
 - A shelf kept in rows — cover, title, author and when the book was last put down — with the covers
   one tap away, and an order to choose: most recently read, title, or author.
+- Each row says how far in you are, and the shelf can be narrowed to what you are reading, what you
+  have not opened, and what you are finished with.
 - Title and author search, a single **Continue reading** line at the top, and a **Finished** mark on
   the last page.
 - Three rooms along the foot of the screen: **Notebook**, **Library** and **Settings**.
@@ -72,7 +74,8 @@ storage and can be carried to another phone in a single zip.
   tapping a result reopens that passage.
 - Highlights in yellow, mint, rose or lavender, notes on a marked passage, and bookmarks — each
   listed under the chapter name the book gives it, in **Contents**.
-- A notebook that gathers every note in the book.
+- A notebook that gathers every note from every book, where a note can be rewritten or dropped and the
+  whole notebook saved as a Markdown file.
 - Reading places are anchored to the text, so changing the font or the screen size keeps your place
   in the words.
 
@@ -121,7 +124,7 @@ Or open the folder in Android Studio and press **Run**.
 ## Tests
 
 ```bash
-./gradlew :app:testDebugUnitTest      # 92 unit tests, no device needed
+./gradlew :app:testDebugUnitTest      # 114 unit tests, no device needed
 ./gradlew :app:lintDebug              # Android lint
 ./gradlew :app:connectedDebugAndroidTest   # 145 tests on a connected phone or emulator
 ```

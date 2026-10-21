@@ -448,6 +448,11 @@ class EpubStore(private val context: Context) {
     fun saveShelfOrder(order: Int) {
         preferences.edit().putInt("shelfOrder", order.coerceIn(0, ShelfOrder.entries.lastIndex)).apply()
     }
+    /** Which part of the shelf the reader last asked to see. */
+    fun shelfFilter() = preferences.getInt("shelfFilter", 0).coerceIn(0, ShelfFilter.entries.lastIndex)
+    fun saveShelfFilter(filter: Int) {
+        preferences.edit().putInt("shelfFilter", filter.coerceIn(0, ShelfFilter.entries.lastIndex)).apply()
+    }
 
     /**
      * Dark or light. Until the reader chooses, the phone's own day/night setting decides, so the app
