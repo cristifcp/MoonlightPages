@@ -55,6 +55,22 @@ jobs:
           TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           "$TOOLS/apksigner" verify --print-certs "$APK"
 
+      # Each release says what changed in it, not what changed in every release before it.
+      - name: Take this version's notes
+        run: |
+          awk 'BEGIN{n=0} /^## /{n++} n==1' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          VERSION="${GITHUB_REF_NAME#v}"
+          HEADING=$(head -1 "$RUNNER_TEMP/notes.md" | sed 's/^## //; s/ .*//')
+          if [ "$HEADING" != "$VERSION" ]; then
+            echo "::error::The top of CHANGELOG.md is $HEADING, not $VERSION, so the notes would belong to another version."
+            exit 1
+          fi
+          if ! grep -q "versionName = \"$VERSION\"" app/build.gradle.kts; then
+            echo "::error::app/build.gradle.kts does not carry versionName $VERSION."
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/notes.md"
+
       - name: Attach it to the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -64,4 +80,4 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             "MoonlightPages-${GITHUB_REF_NAME}.apk" \
             --title "Moonlight Pages $GITHUB_REF_NAME" \
-            --notes-file CHANGELOG.md
+            --notes-file "$RUNNER_TEMP/notes.md"
