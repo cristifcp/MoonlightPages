@@ -98,10 +98,10 @@ class LibraryScreenTest {
             }
         } }
         compose.onNodeWithContentDescription("Search your library").performClick()
-        compose.onNodeWithText("Search your library").performScrollTo().performTextInput("quiet")
+        compose.onNodeWithText("Search your library").performTextInput("quiet")
         compose.onNodeWithContentDescription("${book.title}, by ${book.author}").performScrollTo().performClick()
         compose.runOnIdle { opened = false }
-        compose.onNodeWithText("Search your library").performScrollTo().assertTextContains("quiet")
+        compose.onNodeWithText("Search your library").assertTextContains("quiet")
     }
 
     @Test fun emptyLibraryActionsAreReachableOnShortScreensAndDisabledDuringImport() {
@@ -169,8 +169,7 @@ class LibraryScreenTest {
             LibraryScreen(LibraryState(listOf(reading), loading = false, available = true), store,
                 {}, {}, {}, { opened = it })
         } }
-        compose.onNodeWithContentDescription("Continue reading Half Read at 25%")
-            .performScrollTo().assertIsDisplayed().performClick()
+        compose.onNodeWithContentDescription("Continue reading Half Read at 25%").assertIsDisplayed().performClick()
         compose.runOnIdle { assertEquals("reading", opened?.id) }
     }
 
