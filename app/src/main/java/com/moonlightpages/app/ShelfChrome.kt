@@ -91,7 +91,7 @@ internal fun ShelfBar(current: ShelfTab, onSelect: (ShelfTab) -> Unit) {
 internal fun ShelfSheet(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val colours = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-    Box(modifier.fillMaxSize().clip(shape).background(colours.surfaceVariant.copy(alpha = .72f))
+    Box(modifier.fillMaxSize().clip(shape).background(colours.surfaceVariant.copy(alpha = .85f))
         .border(1.dp, colours.outlineVariant.copy(alpha = .45f), shape)) {
         content()
     }

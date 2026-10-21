@@ -281,6 +281,7 @@ private fun ShelfHeading(
                 .padding(horizontal = 4.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(order.label.uppercase(), style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.8.sp),
                     color = colours.onSurfaceVariant)
+                Spacer(Modifier.width(4.dp))
                 Icon(painterResource(R.drawable.ic_expand_more), contentDescription = null,
                     tint = colours.onSurfaceVariant, modifier = Modifier.size(16.dp))
             }
@@ -411,9 +412,9 @@ private fun BookRow(book: Book, store: EpubStore, now: Long, onOpen: (Book) -> U
                 stateDescription = lastReadLabel(now, lastRead)
                 customActions = listOf(CustomAccessibilityAction("Remove this book") { onLongPress(book); true })
             }
-            .padding(start = 20.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.Top) {
-            BookCover(book, cover, Modifier.width(46.dp).height(68.dp))
-            Spacer(Modifier.width(16.dp))
+            .padding(start = 18.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.Top) {
+            BookCover(book, cover, Modifier.width(44.dp).height(66.dp))
+            Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f).padding(top = 2.dp)) {
                 Text(book.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)

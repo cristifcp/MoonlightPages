@@ -167,32 +167,45 @@ private fun MoonlightPages(
     if (selected != null) {
         ReaderScreen(selected, model.store, openAt = openAt, onBack = { selectedId = null; openAt = null })
     } else {
-        Box(Modifier.fillMaxSize().windowInsetsPadding(
-            WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))) {
-            when (current) {
-                ShelfTab.Notebook -> NotebookScreen(state, model.store) { book, passage ->
-                    openAt = passage
-                    selectedId = book.id
+        // The three rooms share one painted surface. Painting it once here is what gives the status
+        // bar, the sheet and every word without a colour of its own something to belong to: without
+        // it the window's own background shows through, and uncoloured text falls back to black.
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Box(Modifier.fillMaxSize().windowInsetsPadding(
+                WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))) {
+                when (current) {
+                    ShelfTab.Notebook -> NotebookScreen(state, model.store) { book, passage ->
+                        openAt = passage
+                        selectedId = book.id
+                    }
+                    ShelfTab.Library -> screens.SaveableStateProvider("library") {
+                        LibraryScreen(state, model.store,
+                            onImport = { picker.launch(arrayOf(
+                                // Anything the file manager can hand over: these are books, not a file type the
+                                // system knows. A file that is neither an EPUB nor a FictionBook is refused
+                                // plainly once it is open, which is a better gate than a guessed type.
+                                "*/*")) },
+                            onSample = { model.importSample() }, onRetry = { model.reload() },
+                            onOpen = { openAt = null; selectedId = it.id },
+                            onDelete = { model.delete(it) })
+                    }
+                    ShelfTab.Settings -> SettingsScreen(model.store,
+                        onBack = { tab = ShelfTab.Library.ordinal },
+                        backingUp = state.backingUp, restoring = state.restoring,
+                        darkTheme = darkTheme, onDarkTheme = onDarkTheme,
+                        onBackup = { backupSaver.launch(backupFileName()) },
+                        onRestore = { backupPicker.launch(SUPPORTED_BACKUP_TYPES) }, showBack = false)
                 }
-                ShelfTab.Library -> screens.SaveableStateProvider("library") {
-                    LibraryScreen(state, model.store,
-                        onImport = { picker.launch(arrayOf(
-                            // Anything the file manager can hand over: these are books, not a file type the
-                            // system knows. A file that is neither an EPUB nor a FictionBook is refused
-                            // plainly once it is open, which is a better gate than a guessed type.
-                            "*/*")) },
-                        onSample = { model.importSample() }, onRetry = { model.reload() },
-                        onOpen = { openAt = null; selectedId = it.id },
-                        onDelete = { model.delete(it) })
-                }
-                ShelfTab.Settings -> SettingsScreen(model.store,
-                    onBack = { tab = ShelfTab.Library.ordinal },
-                    backingUp = state.backingUp, restoring = state.restoring,
-                    darkTheme = darkTheme, onDarkTheme = onDarkTheme,
-                    onBackup = { backupSaver.launch(backupFileName()) },
-                    onRestore = { backupPicker.launch(SUPPORTED_BACKUP_TYPES) }, showBack = false)
+                // The sheet runs under the bar. Fading it out there keeps the words out of the bar's
+                // way without cutting the sheet off in a hard line above it.
+                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(152.dp)
+                    .background(Brush.verticalGradient(listOf(
+                        Color.Transparent,
+                        MaterialTheme.colorScheme.background.copy(alpha = .92f),
+                        MaterialTheme.colorScheme.background,
+                    ))))
+                Box(Modifier.align(Alignment.BottomCenter)) { ShelfBar(current) { tab = it.ordinal } }
             }
-            Box(Modifier.align(Alignment.BottomCenter)) { ShelfBar(current) { tab = it.ordinal } }
         }
         // The notebook and the settings are rooms off the shelf, so Back returns to it.
         BackHandler(current != ShelfTab.Library) { tab = ShelfTab.Library.ordinal }

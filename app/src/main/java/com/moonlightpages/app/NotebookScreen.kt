@@ -131,7 +131,7 @@ private fun NoteRow(entry: NotebookEntry, now: Long, onOpen: (Book, SelectedPass
 private fun EmptyNotebook() {
     val colours = MaterialTheme.colorScheme
     Column(Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 56.dp),
-        horizontalAlignment = Alignment.CenterHorizontally) {
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text("Nothing noted yet.", style = MaterialTheme.typography.headlineSmall)
         Text("A highlight becomes a note when you write on it while reading.\n" +
             "Every note you write gathers here, whichever book it came from.",

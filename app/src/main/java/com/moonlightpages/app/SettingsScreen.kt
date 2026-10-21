@@ -145,7 +145,7 @@ internal fun SettingsScreen(
             Text("Your books, progress, bookmarks, and highlights stay on this device and are never uploaded.",
                 style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 14.dp))
-            Spacer(Modifier.height(104.dp))
+            Spacer(Modifier.height(140.dp))
         }
     }
     if (confirmingRestore) AlertDialog(onDismissRequest = { confirmingRestore = false },

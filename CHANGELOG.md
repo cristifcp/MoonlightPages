@@ -1,5 +1,13 @@
 # Release notes
 
+## 1.1.1 — 21 October 2026
+
+- The shelf and the notebook paint the app's own background now, so a dark theme no longer shows a
+  white window behind them — and the words that took their colour from the theme are no longer black
+  on it.
+- The foot of the screen fades out under the bar, so a long page of settings no longer runs into the
+  icons.
+
 ## 1.1 — 21 October 2026
 
 **The shelf**
